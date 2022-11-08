@@ -58,7 +58,7 @@ public class TokenProvider implements InitializingBean {
         Date refreshValidity = new Date(now + this.refreshTokenValidity);
 
         String accessToken = Jwts.builder()
-                .setSubject(authentication.getName())   // 회원의 id
+                .setSubject(authentication.getName())   // 회원 번호
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer("young")
                 .claim(AUTHORITIES_KEY, authorities)
@@ -68,12 +68,14 @@ public class TokenProvider implements InitializingBean {
 
         String refreshToken = Jwts.builder()
                 .setIssuer("young")
+                .signWith(key, SignatureAlgorithm.HS256)
                 .setExpiration(refreshValidity)
                 .compact();
 
         return TokenDto.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
+                .accessTokenExpireDate(accessValidity)
                 .build();
     }
 
@@ -102,6 +104,7 @@ public class TokenProvider implements InitializingBean {
         } catch (SecurityException | MalformedJwtException e) {
             log.info("잘못된 jwt 서명입니다.");
         } catch (ExpiredJwtException e) {
+            // TODO: refresh token 확인 후 토큰 재발급 받도록 error code 를 변경
             log.info("만료된 jwt 토큰입니다.");
         } catch (UnsupportedJwtException e) {
             log.info("지원되지 않는 jwt 토큰입니다.");

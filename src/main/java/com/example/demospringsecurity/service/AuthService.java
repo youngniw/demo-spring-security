@@ -2,10 +2,13 @@ package com.example.demospringsecurity.service;
 
 import com.example.demospringsecurity.domain.Member;
 import com.example.demospringsecurity.domain.MemberRole;
+import com.example.demospringsecurity.domain.RefreshToken;
 import com.example.demospringsecurity.dto.LoginDto;
 import com.example.demospringsecurity.dto.SignUpDto;
 import com.example.demospringsecurity.dto.TokenDto;
+import com.example.demospringsecurity.dto.TokenRequestDto;
 import com.example.demospringsecurity.repository.MemberRepository;
+import com.example.demospringsecurity.repository.RefreshTokenRepository;
 import com.example.demospringsecurity.security.SecurityUtil;
 import com.example.demospringsecurity.security.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +30,7 @@ import java.util.Optional;
 @Service
 public class AuthService {
     private final MemberRepository memberRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final TokenProvider tokenProvider;
@@ -49,12 +53,32 @@ public class AuthService {
     // 로그인 (회원 검증 및 토큰 반환)
     public TokenDto login(LoginDto loginDto) {
         try {
+            Member member = memberRepository.findByLoginId(loginDto.getLoginId()).orElseThrow(()
+                    // TODO: 아이디 없음관련 예외 처리
+                    -> new RuntimeException("아이디가 존재하지 않습니다."));
+
             Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(loginDto.getLoginId(), loginDto.getLoginPassword()));
+                    new UsernamePasswordAuthenticationToken(member.getMemberId(), loginDto.getLoginPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            return tokenProvider.generateToken(authentication);
+            TokenDto token = tokenProvider.generateToken(authentication);
+
+            // refresh token 수정 및 저장
+            Optional<RefreshToken> refreshToken = refreshTokenRepository.findByKey(member.getMemberId());
+            if (refreshToken.isPresent()) {
+                RefreshToken newRefreshToken = refreshToken.get().updateValue(token.getRefreshToken());
+                refreshTokenRepository.save(newRefreshToken);
+            }
+            else {
+                refreshTokenRepository.save(
+                        RefreshToken.builder()
+                                .key(member.getMemberId())
+                                .value(token.getRefreshToken())
+                                .build());
+            }
+
+            return token;
         } catch (AuthenticationException e) {
             // ex) 아이디가 없음, 비밀번호가 옳지 않음
             throw new RuntimeException("로그인 정보가 옳지 않습니다.");
@@ -63,6 +87,34 @@ public class AuthService {
 
     // SecurityContext 내의 회원 반환
     public Optional<Member> getMemberInContextWithAuthorities() {
-        return SecurityUtil.getCurrentMemberLoginId().flatMap(memberRepository::findByLoginId);
+        return SecurityUtil.getCurrentMemberId().flatMap(memberRepository::findById);
+    }
+
+    // accessToken 기간 만료 시 토큰 재발급
+    public TokenDto reissue(TokenRequestDto tokenRequest) {
+        if (!tokenProvider.validateToken(tokenRequest.getRefreshToken())) {
+            throw new RuntimeException("Refresh 토큰이 유효하지 않아 로그인이 필요합니다.");
+        }
+
+        // 토큰 내의 회원 번호 알아내기 위한 authentication 추출
+        Authentication authentication = tokenProvider.getAuthentication(tokenRequest.getAccessToken());
+
+        log.info("authentication.getName()은: "+authentication.getName());
+
+        RefreshToken refreshToken = refreshTokenRepository.findByKey(Long.valueOf(authentication.getName()))
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+
+        if (!refreshToken.getValue().equals(tokenRequest.getRefreshToken())) {
+            throw new RuntimeException("Refresh 토큰 정보가 일치하지 않습니다.");
+        }
+
+        // 토큰 재생성
+        TokenDto token = tokenProvider.generateToken(authentication);
+
+        // refresh token 값 수정
+        RefreshToken newRefreshToken = refreshToken.updateValue(token.getRefreshToken());
+        refreshTokenRepository.save(newRefreshToken);
+
+        return token;
     }
 }

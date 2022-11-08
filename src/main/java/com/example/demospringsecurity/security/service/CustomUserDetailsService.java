@@ -22,11 +22,11 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     @Transactional
-    public UserDetails loadUserByUsername(String loginId) throws UsernameNotFoundException {
+    public UserDetails loadUserByUsername(String memberId) throws UsernameNotFoundException {
         // 인증 처리 방식 정의
-        // username => loginId
-        return memberRepository.findByLoginId(loginId)
-                .map(member -> createUser(loginId, member))
+        // username: memberId
+        return memberRepository.findById(Long.parseLong(memberId))
+                .map(member -> createUser(memberId, member))
                 .orElseThrow(() -> new UsernameNotFoundException("등록되지 않은 사용자입니다."));
     }
 

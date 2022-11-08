@@ -1,14 +1,9 @@
 package com.example.demospringsecurity.dto;
 
-import lombok.Builder;
 import lombok.Getter;
 
-import java.util.Date;
-
-@Builder
 @Getter
-public class TokenDto {
+public class TokenRequestDto {
     private String accessToken;
     private String refreshToken;
-    private Date accessTokenExpireDate;
 }

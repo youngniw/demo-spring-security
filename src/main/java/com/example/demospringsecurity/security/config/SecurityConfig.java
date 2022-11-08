@@ -60,6 +60,7 @@ public class SecurityConfig {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/login").permitAll()
+                .antMatchers("/token/reissue").permitAll()
                 .antMatchers("/signup").anonymous()
                 .antMatchers("/member/**").access("hasRole('ROLE_ADMIN')")
                 .anyRequest().authenticated()  // 나머지 API는 모두 인증 필요
