@@ -53,9 +53,8 @@ public class AuthService {
     // 로그인 (회원 검증 및 토큰 반환)
     public TokenDto login(LoginDto loginDto) {
         try {
-            Member member = memberRepository.findByLoginId(loginDto.getLoginId()).orElseThrow(()
-                    // TODO: 아이디 없음관련 예외 처리
-                    -> new RuntimeException("아이디가 존재하지 않습니다."));
+            Member member = memberRepository.findByLoginId(loginDto.getLoginId())
+                    .orElseThrow(() -> new RuntimeException("아이디가 존재하지 않습니다."));
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(member.getMemberId(), loginDto.getLoginPassword()));
