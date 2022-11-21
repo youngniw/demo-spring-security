@@ -47,7 +47,9 @@ public class SecurityConfig {
         http
                 .csrf()
                 .disable()
+                .cors()
 
+                .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(jwtAuthenticationEntryPoint)      // 인증되지 않은 사용자일 때 UnAuthorized(401) 오류 반환
                 .accessDeniedHandler(jwtAccessDeniedHandler)                // 필요 권한이 없는 사용자일 때 Forbidden(403) 오류 반환

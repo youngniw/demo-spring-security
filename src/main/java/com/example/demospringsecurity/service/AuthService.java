@@ -12,7 +12,6 @@ import com.example.demospringsecurity.repository.RefreshTokenRepository;
 import com.example.demospringsecurity.security.SecurityUtil;
 import com.example.demospringsecurity.security.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
-@Slf4j
 @RequiredArgsConstructor
 @Transactional
 @Service
@@ -97,8 +95,6 @@ public class AuthService {
 
         // 토큰 내의 회원 번호 알아내기 위한 authentication 추출
         Authentication authentication = tokenProvider.getAuthentication(tokenRequest.getAccessToken());
-
-        log.info("authentication.getName()은: "+authentication.getName());
 
         RefreshToken refreshToken = refreshTokenRepository.findByKey(Long.valueOf(authentication.getName()))
                 .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
