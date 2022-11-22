@@ -1,5 +1,6 @@
 package com.example.demospringsecurity.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -30,6 +31,12 @@ public class Member {
     @Column(length = 50)
     private String name;
 
+    @Column
+    private String providerId;
+
+    @Column
+    private String email;
+
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private MemberRole memberRole;
@@ -39,4 +46,12 @@ public class Member {
 
     @LastModifiedDate
     private LocalDateTime modifiedDate;
+
+    @JsonIgnore
+    public Member updateName(String name) {
+        if (name != null)
+            this.name = name;
+
+        return this;
+    }
 }

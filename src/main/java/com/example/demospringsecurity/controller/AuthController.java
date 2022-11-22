@@ -7,17 +7,16 @@ import com.example.demospringsecurity.dto.TokenRequestDto;
 import com.example.demospringsecurity.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.*;
 
 @RequiredArgsConstructor
-@RestController
+@Controller
 public class AuthController {
     private final AuthService authService;
 
     // 회원가입
+    @ResponseBody
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignUpDto signUpDto) {
         authService.signup(signUpDto);
@@ -26,6 +25,7 @@ public class AuthController {
     }
 
     // 로그인
+    @ResponseBody
     @PostMapping("/login")
     public ResponseEntity<TokenDto> login(@RequestBody LoginDto loginDto) {
         // Jwt 전달
@@ -37,15 +37,14 @@ public class AuthController {
                 .body(tokenDto);
     }
 
-    // 로그아웃
-    @GetMapping("/logout")
-    public ResponseEntity<String> logout() {
-        // TODO: REFRESH TOKEN 삭제
-
-        return ResponseEntity.ok("success - logout");
+    // 소셜 로그인(서버 웹페이지)
+    @GetMapping("/login/oauth2")
+    public String login() {
+        return "social_login";
     }
 
     // 토큰 재발급
+    @ResponseBody
     @PostMapping("/token/reissue")
     public ResponseEntity<TokenDto> tokenReissue(@RequestBody TokenRequestDto tokenRequest) {
         // Jwt 전달
