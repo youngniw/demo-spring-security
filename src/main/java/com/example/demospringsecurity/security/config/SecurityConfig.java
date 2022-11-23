@@ -67,6 +67,7 @@ public class SecurityConfig {
                 .authorizeRequests()
                 .antMatchers("/login").permitAll()
                 .antMatchers("/login/**").permitAll()
+                .antMatchers("/login/oauth/google").permitAll()
                 .antMatchers("/token/reissue").permitAll()
                 .antMatchers("/signup").anonymous()
                 .antMatchers("/member/**").access("hasRole('ROLE_ADMIN')")

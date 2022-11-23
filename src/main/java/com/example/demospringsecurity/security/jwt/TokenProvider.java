@@ -1,5 +1,6 @@
 package com.example.demospringsecurity.security.jwt;
 
+import com.example.demospringsecurity.domain.MemberRole;
 import com.example.demospringsecurity.dto.TokenDto;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
@@ -62,6 +63,33 @@ public class TokenProvider implements InitializingBean {
                 .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
                 .setIssuer("young")
                 .claim(AUTHORITIES_KEY, authorities)
+                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(accessValidity)
+                .compact();
+
+        String refreshToken = Jwts.builder()
+                .setIssuer("young")
+                .signWith(key, SignatureAlgorithm.HS256)
+                .setExpiration(refreshValidity)
+                .compact();
+
+        return TokenDto.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .accessTokenExpireDate(accessValidity)
+                .build();
+    }
+    // 소셜 로그인을 통한 토근 생성
+    public TokenDto generateToken(Long memberId, MemberRole memberRole) {
+        long now = (new Date()).getTime();
+        Date accessValidity = new Date(now + this.accessTokenValidity);
+        Date refreshValidity = new Date(now + this.refreshTokenValidity);
+
+        String accessToken = Jwts.builder()
+                .setSubject(String.valueOf(memberId))   // 회원 번호
+                .setHeaderParam(Header.TYPE, Header.JWT_TYPE)
+                .setIssuer("young")
+                .claim(AUTHORITIES_KEY, memberRole.getValue())
                 .signWith(key, SignatureAlgorithm.HS256)
                 .setExpiration(accessValidity)
                 .compact();

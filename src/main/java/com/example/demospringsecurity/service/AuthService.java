@@ -81,6 +81,42 @@ public class AuthService {
             throw new RuntimeException("로그인 정보가 옳지 않습니다.");
         }
     }
+    // 소셜 로그인 (회원 여부 확인 및 회원가입, 토큰 반환)
+    public TokenDto socialLogin(String providerId, String name, String email) {
+        try {
+            Member member = memberRepository.findByProviderId(providerId)
+                    .map(entity -> entity.updateName(name))
+                    .orElse(Member.builder()
+                            .name(name)
+                            .email(email)
+                            .providerId(providerId)
+                            .memberRole(MemberRole.USER)
+                            .build());
+
+            memberRepository.save(member);
+
+            TokenDto token = tokenProvider.generateToken(member.getMemberId(), member.getMemberRole());
+
+            // refresh token 수정 및 저장
+            Optional<RefreshToken> refreshToken = refreshTokenRepository.findByKey(member.getMemberId());
+            if (refreshToken.isPresent()) {
+                RefreshToken newRefreshToken = refreshToken.get().updateValue(token.getRefreshToken());
+                refreshTokenRepository.save(newRefreshToken);
+            }
+            else {
+                refreshTokenRepository.save(
+                        RefreshToken.builder()
+                                .key(member.getMemberId())
+                                .value(token.getRefreshToken())
+                                .build());
+            }
+
+            return token;
+        } catch (AuthenticationException e) {
+            // ex) 아이디가 없음, 비밀번호가 옳지 않음
+            throw new RuntimeException("로그인 정보가 옳지 않습니다.");
+        }
+    }
 
     // SecurityContext 내의 회원 반환
     public Optional<Member> getMemberInContextWithAuthorities() {
