@@ -16,7 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Map;
 
 @RequiredArgsConstructor
@@ -28,9 +30,13 @@ public class AuthController {
     @ResponseBody
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody SignUpDto signUpDto) {
-        authService.signup(signUpDto);
+        Long memberId = authService.signup(signUpDto);
 
-        return ResponseEntity.ok("success");
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .path("/{memberId}")
+                .buildAndExpand(memberId)
+                .toUri();
+        return ResponseEntity.created(uri).build();
     }
 
     // 로그인
@@ -92,8 +98,10 @@ public class AuthController {
         // Jwt 전달
         TokenDto reissueToken = authService.reissue(tokenRequest);
 
-        return ResponseEntity
-                .ok()
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest()
+                .build()
+                .toUri();
+        return ResponseEntity.created(uri)
                 .header("Authorization", "Bearer ".concat(reissueToken.getAccessToken()))
                 .body(reissueToken);
     }

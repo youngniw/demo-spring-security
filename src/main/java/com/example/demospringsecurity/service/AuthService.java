@@ -34,7 +34,7 @@ public class AuthService {
     private final TokenProvider tokenProvider;
 
     // 회원 가입 (회원 가입 유무 확인 및 생성)
-    public void signup(SignUpDto signUpDto) {
+    public Long signup(SignUpDto signUpDto) {
         if (memberRepository.existsByLoginId(signUpDto.getId()))
             throw new RuntimeException("이미 가입되어 있는 회원입니다.");
 
@@ -45,7 +45,8 @@ public class AuthService {
                 .memberRole(MemberRole.USER)    // 회원가입한 회원은 모두 USER 역할을 취득함
                 .build();
 
-        memberRepository.save(member);
+        Member saveMember = memberRepository.save(member);
+        return saveMember.getMemberId();
     }
 
     // 로그인 (회원 검증 및 토큰 반환)

@@ -69,7 +69,7 @@ public class SecurityConfig {
                 .antMatchers("/login/**").permitAll()
                 .antMatchers("/login/oauth/google").permitAll()
                 .antMatchers("/token/reissue").permitAll()
-                .antMatchers("/signup").anonymous()
+                .antMatchers("/signup").permitAll()
                 .antMatchers("/member/**").access("hasRole('ROLE_ADMIN')")
                 .anyRequest().authenticated()  // 나머지 API는 모두 인증 필요
 
